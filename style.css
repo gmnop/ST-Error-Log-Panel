@@ -1,0 +1,738 @@
+/* SillyTavern Error Log Panel */
+
+#stelp-panel,
+#stelp-panel *,
+#stelp-panel *::before,
+#stelp-panel *::after,
+#stelp-settings,
+#stelp-settings *,
+#stelp-settings *::before,
+#stelp-settings *::after {
+    box-sizing: border-box;
+}
+
+#stelp-panel {
+    position: fixed;
+    left: 12px;
+    top: calc(var(--topBarBlockSize, 40px) + 16px);
+    width: min(380px, calc(100vw - 24px));
+    max-height: min(62vh, calc(100vh - var(--topBarBlockSize, 40px) - 100px));
+    max-height: min(62dvh, calc(100dvh - var(--topBarBlockSize, 40px) - 100px));
+    display: flex;
+    flex-direction: column;
+    z-index: 2500;
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 10px;
+    background-color: var(--SmartThemeBlurTintColor, rgba(20, 20, 25, 0.92));
+    color: var(--SmartThemeBodyColor, #e8e8e8);
+    box-shadow: 0 8px 24px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.35));
+    -webkit-backdrop-filter: blur(var(--SmartThemeBlurStrength, 10px));
+    backdrop-filter: blur(var(--SmartThemeBlurStrength, 10px));
+    font-family: inherit;
+    font-size: calc(var(--mainFontSize, 15px) * 0.9);
+    line-height: 1.35;
+    overflow: hidden;
+    transition: width 0.15s ease, max-height 0.15s ease, opacity 0.15s ease;
+}
+
+#stelp-panel.stelp-collapsed {
+    width: 42px;
+    max-height: 200px;
+}
+
+#stelp-panel.stelp-collapsed .stelp-header,
+#stelp-panel.stelp-collapsed .stelp-filters,
+#stelp-panel.stelp-collapsed .stelp-list,
+#stelp-panel.stelp-collapsed .stelp-footer {
+    display: none;
+}
+
+#stelp-panel .stelp-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 7px 8px 7px 10px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #555);
+    background: rgba(255, 255, 255, 0.03);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+#stelp-panel .stelp-header:active {
+    cursor: grabbing;
+}
+
+#stelp-panel .stelp-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+#stelp-panel .stelp-title {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+#stelp-panel .stelp-unread {
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--progErrorColor, #d9534f);
+    color: #fff;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-align: center;
+}
+
+#stelp-panel .stelp-hidden {
+    display: none !important;
+}
+
+#stelp-panel .stelp-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+}
+
+#stelp-panel .stelp-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.75;
+}
+
+#stelp-panel .stelp-icon-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#stelp-panel .stelp-icon-btn i {
+    font-size: 0.9em;
+}
+
+#stelp-panel .stelp-filters {
+    display: flex;
+    gap: 4px;
+    flex: 0 0 auto;
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.25);
+}
+
+#stelp-panel .stelp-filter {
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: rgba(127, 127, 127, 0.12);
+    color: inherit;
+    font-size: 0.8em;
+    cursor: pointer;
+    opacity: 0.75;
+}
+
+#stelp-panel .stelp-filter:hover {
+    opacity: 1;
+}
+
+#stelp-panel .stelp-filter.active {
+    border-color: var(--SmartThemeBorderColor, #666);
+    background: rgba(127, 127, 127, 0.28);
+    opacity: 1;
+}
+
+#stelp-panel .stelp-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#stelp-panel .stelp-empty {
+    padding: 18px 12px;
+    text-align: center;
+    opacity: 0.6;
+    font-size: 0.9em;
+}
+
+#stelp-panel .stelp-entry {
+    position: relative;
+    padding: 7px 9px 8px;
+    border-left: 3px solid transparent;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+    cursor: pointer;
+}
+
+#stelp-panel .stelp-entry:hover {
+    background: rgba(127, 127, 127, 0.07);
+}
+
+#stelp-panel .stelp-entry.stelp-level-error {
+    border-left-color: var(--progErrorColor, #d9534f);
+}
+
+#stelp-panel .stelp-entry.stelp-level-warn {
+    border-left-color: #e8a33d;
+}
+
+#stelp-panel .stelp-entry.stelp-level-info {
+    border-left-color: #4c9be8;
+}
+
+#stelp-panel .stelp-entry.stelp-unread {
+    background: rgba(217, 83, 79, 0.06);
+}
+
+#stelp-panel .stelp-entry.stelp-unread .stelp-entry-title {
+    font-weight: 700;
+}
+
+#stelp-panel .stelp-entry.stelp-flash {
+    animation: stelp-flash 1.6s ease;
+}
+
+@keyframes stelp-flash {
+    0% {
+        background: rgba(232, 163, 61, 0.35);
+    }
+    100% {
+        background: transparent;
+    }
+}
+
+#stelp-panel .stelp-entry-head {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 3px;
+}
+
+#stelp-panel .stelp-badge {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: 700;
+    line-height: 1.6;
+    white-space: nowrap;
+}
+
+#stelp-panel .stelp-source {
+    background: rgba(127, 127, 127, 0.18);
+    opacity: 0.9;
+}
+
+#stelp-panel .stelp-source-http {
+    color: #8fc2ff;
+}
+
+#stelp-panel .stelp-source-network {
+    color: #c792ea;
+}
+
+#stelp-panel .stelp-source-watchdog {
+    color: #ffcc80;
+}
+
+#stelp-panel .stelp-source-sse {
+    color: #ff8a65;
+}
+
+#stelp-panel .stelp-source-toastr {
+    color: #ffb74d;
+}
+
+#stelp-panel .stelp-source-js,
+#stelp-panel .stelp-source-unhandled {
+    color: #f06292;
+}
+
+#stelp-panel .stelp-source-console {
+    color: #90a4ae;
+}
+
+#stelp-panel .stelp-status {
+    color: #ddd;
+}
+
+#stelp-panel .stelp-status-4xx {
+    background: rgba(232, 163, 61, 0.22);
+    color: #ffcc80;
+}
+
+#stelp-panel .stelp-status-5xx,
+#stelp-panel .stelp-status-error {
+    background: rgba(217, 83, 79, 0.24);
+    color: #ff8a80;
+}
+
+#stelp-panel .stelp-status-warn {
+    background: rgba(232, 163, 61, 0.22);
+    color: #ffcc80;
+}
+
+#stelp-panel .stelp-status-info {
+    background: rgba(76, 155, 232, 0.22);
+    color: #8fc2ff;
+}
+
+#stelp-panel .stelp-time {
+    margin-left: auto;
+    font-size: 0.72em;
+    opacity: 0.55;
+    white-space: nowrap;
+}
+
+#stelp-panel .stelp-count {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: #ffcc80;
+}
+
+#stelp-panel .stelp-chevron {
+    font-size: 0.65em;
+    opacity: 0.45;
+    transition: transform 0.15s ease;
+}
+
+#stelp-panel .stelp-entry.stelp-expanded .stelp-chevron {
+    transform: rotate(180deg);
+}
+
+#stelp-panel .stelp-entry-title {
+    font-size: 0.88em;
+    word-break: break-word;
+}
+
+#stelp-panel .stelp-entry-message {
+    display: -webkit-box;
+    margin-top: 2px;
+    overflow: hidden;
+    opacity: 0.8;
+    font-size: 0.82em;
+    word-break: break-word;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+#stelp-panel .stelp-entry.stelp-expanded .stelp-entry-message {
+    display: block;
+    -webkit-line-clamp: unset;
+}
+
+#stelp-panel .stelp-entry-details {
+    margin-top: 7px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(127, 127, 127, 0.35);
+    cursor: default;
+}
+
+#stelp-panel .stelp-detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 5px;
+}
+
+#stelp-panel .stelp-kv {
+    display: flex;
+    gap: 6px;
+    font-size: 0.78em;
+}
+
+#stelp-panel .stelp-k {
+    flex: 0 0 64px;
+    opacity: 0.55;
+}
+
+#stelp-panel .stelp-v {
+    flex: 1 1 auto;
+    word-break: break-word;
+}
+
+#stelp-panel .stelp-detail-label {
+    margin: 6px 0 2px;
+    font-size: 0.75em;
+    opacity: 0.6;
+}
+
+#stelp-panel .stelp-pre {
+    max-height: 180px;
+    margin: 0;
+    padding: 6px 7px;
+    overflow: auto;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: 0.74em;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+#stelp-panel .stelp-detail-copy {
+    margin-top: 7px;
+    font-size: 0.8em;
+}
+
+#stelp-panel .stelp-footer {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 4px 9px;
+    border-top: 1px solid rgba(127, 127, 127, 0.25);
+    font-size: 0.72em;
+    opacity: 0.55;
+}
+
+#stelp-panel .stelp-reload {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: 1em;
+    text-decoration: underline;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+#stelp-panel .stelp-reload:hover {
+    opacity: 1;
+}
+
+#stelp-panel.stelp-paused .stelp-title::after {
+    content: "（已暂停）";
+    font-size: 0.8em;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+#stelp-panel .stelp-tab {
+    display: none;
+}
+
+#stelp-panel.stelp-collapsed .stelp-tab {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 4px;
+    cursor: pointer;
+}
+
+#stelp-panel .stelp-tab-icon {
+    color: var(--progErrorColor, #d9534f);
+    font-size: 1.05em;
+}
+
+#stelp-panel .stelp-tab-label {
+    writing-mode: vertical-rl;
+    letter-spacing: 2px;
+    font-size: 0.78em;
+    opacity: 0.8;
+}
+
+#stelp-panel .stelp-tab-badge {
+    min-width: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: var(--progErrorColor, #d9534f);
+    color: #fff;
+    font-size: 0.7em;
+    font-weight: 700;
+    text-align: center;
+}
+
+#stelp-panel .stelp-inline-toast {
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    max-width: calc(100% - 24px);
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.78);
+    color: #fff;
+    font-size: 0.78em;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 6px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    white-space: nowrap;
+}
+
+#stelp-panel .stelp-inline-toast.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+#stelp-panel .stelp-show-more {
+    display: block;
+    width: calc(100% - 16px);
+    margin: 6px 8px;
+    padding: 5px 8px;
+    border: 1px dashed var(--SmartThemeBorderColor, #666);
+    border-radius: 6px;
+    background: rgba(127, 127, 127, 0.1);
+    color: inherit;
+    font-size: 0.78em;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+#stelp-panel .stelp-show-more:hover {
+    opacity: 1;
+    background: rgba(127, 127, 127, 0.2);
+}
+
+/* Top-center notice: visible even when the panel is collapsed/mobile */
+#stelp-notice {
+    position: fixed;
+    top: calc(var(--topBarBlockSize, 40px) + 8px);
+    left: 50%;
+    z-index: 999998;
+    max-width: min(560px, calc(100vw - 24px));
+    padding: 8px 14px;
+    border: 1px solid var(--progErrorColor, #d9534f);
+    border-radius: 9px;
+    background-color: var(--SmartThemeBlurTintColor, rgba(20, 20, 25, 0.96));
+    color: var(--SmartThemeBodyColor, #f2f2f2);
+    box-shadow: 0 6px 20px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.4));
+    font-family: inherit;
+    font-size: calc(var(--mainFontSize, 15px) * 0.86);
+    line-height: 1.35;
+    opacity: 0;
+    pointer-events: none;
+    cursor: pointer;
+    transform: translate(-50%, -8px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#stelp-notice.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+
+#stelp-notice .stelp-notice-title {
+    margin-bottom: 2px;
+    color: var(--progErrorColor, #ff8a80);
+    font-weight: 700;
+    word-break: break-word;
+}
+
+#stelp-notice .stelp-notice-message {
+    display: -webkit-box;
+    overflow: hidden;
+    opacity: 0.85;
+    word-break: break-word;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+/* Settings drawer */
+#stelp-settings .stelp-settings-note {
+    margin-bottom: 8px;
+    font-size: 0.85em;
+    opacity: 0.75;
+}
+
+#stelp-settings .stelp-setting-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0;
+}
+
+#stelp-settings .stelp-number-row {
+    justify-content: space-between;
+}
+
+#stelp-settings .stelp-number-row input {
+    width: 90px;
+    flex: 0 0 auto;
+}
+
+#stelp-settings .stelp-settings-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    #stelp-panel {
+        left: 8px !important;
+        top: calc(var(--topBarBlockSize, 40px) + 8px) !important;
+        width: calc(100vw - 16px);
+        max-height: 50vh;
+        max-height: 50dvh;
+    }
+
+    #stelp-panel.stelp-collapsed {
+        width: 42px;
+        max-height: 180px;
+    }
+
+    #stelp-panel .stelp-entry-message {
+        -webkit-line-clamp: 2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #stelp-panel,
+    #stelp-panel *,
+    #stelp-settings * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ---------------------------------------------------------------
+   中文原因分析（diagnose.js）
+   --------------------------------------------------------------- */
+#stelp-panel .stelp-entry-diag {
+    margin-top: 2px;
+    padding-left: 6px;
+    border-left: 2px dashed var(--SmartThemeBorderColor, #555);
+    font-size: 0.86em;
+    line-height: 1.3;
+    opacity: 0.85;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+
+#stelp-panel .stelp-entry-diag-high {
+    border-left-color: #e2694f;
+    color: #f0b6a6;
+}
+
+#stelp-panel .stelp-entry-diag-mid {
+    border-left-color: #d9a13b;
+    color: #e6cd94;
+}
+
+#stelp-panel .stelp-entry-diag-low {
+    border-left-color: var(--SmartThemeBorderColor, #555);
+}
+
+#stelp-panel .stelp-diag {
+    margin: 0 0 8px;
+    padding: 7px 8px 8px;
+    border: 1px solid var(--SmartThemeBorderColor, #555);
+    border-left: 3px solid var(--SmartThemeBorderColor, #555);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+#stelp-panel .stelp-diag-high {
+    border-left-color: #e2694f;
+}
+
+#stelp-panel .stelp-diag-mid {
+    border-left-color: #d9a13b;
+}
+
+#stelp-panel .stelp-diag-low {
+    border-left-color: #7a7a7a;
+}
+
+#stelp-panel .stelp-diag-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+#stelp-panel .stelp-diag-icon {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+#stelp-panel .stelp-diag-title {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+#stelp-panel .stelp-diag-conf {
+    padding: 0 5px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    font-size: 0.78em;
+    opacity: 0.9;
+}
+
+#stelp-panel .stelp-diag-tag {
+    padding: 0 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.75em;
+    opacity: 0.85;
+}
+
+#stelp-panel .stelp-diag-summary {
+    margin-bottom: 4px;
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+#stelp-panel .stelp-diag-label {
+    margin-top: 6px;
+    font-size: 0.8em;
+    font-weight: 700;
+    opacity: 0.72;
+}
+
+#stelp-panel .stelp-diag-list {
+    margin: 3px 0 0;
+    padding-left: 16px;
+    list-style: disc;
+    font-size: 0.88em;
+    line-height: 1.4;
+}
+
+#stelp-panel .stelp-diag-list li {
+    margin: 1px 0;
+    word-break: break-word;
+}
+
+#stelp-panel .stelp-diag-fixes li {
+    color: #9fd08a;
+}
+
+#stelp-settings .stelp-settings-section {
+    margin: 10px 0 2px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--SmartThemeBorderColor, #555);
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    #stelp-panel .stelp-entry-diag {
+        -webkit-line-clamp: 3;
+    }
+
+    #stelp-panel .stelp-diag-list {
+        font-size: 0.85em;
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "display_name": "错误日志面板",
+    "loading_order": 1,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "gmnop",
+    "homePage": "https://github.com/gmnop/ST-Error-Log-Panel",
+    "version": "1.2.2",
+    "auto_update": true,
+    "description": "把 SillyTavern 里一闪而过的 HTTP 错误、流式错误、超时与 Toastr 提示固定显示在左侧悬浮面板，并对每条错误自动给出中文原因分析与处置建议。"
+}

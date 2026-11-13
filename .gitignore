@@ -1,0 +1,11 @@
+# 扩展本身是纯前端，没有构建产物；以下仅防止误提交
+
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.zip
+settings*.json
