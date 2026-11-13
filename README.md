@@ -59,72 +59,32 @@ SillyTavern 第三方前端扩展。把一闪而过的报错**固定显示在页
 | 项 | 要求 |
 |---|---|
 | SillyTavern | ≥ 1.12（已在 **1.19.0**（Docker）与 **1.17.0**（Windows 本地）上验证；依赖 `getContext()`、`extensionSettings`、inline-drawer 样式） |
-| 浏览器 | Chrome / Edge / Firefox 最近版本（用到 `AbortController`、`ReadableStream`、`structuredClone` 之外的现代 API） |
+| 浏览器 | Chrome / Edge / Firefox 最近版本（用到 `AbortController`、`ReadableStream` 等现代 API） |
 | 运行时依赖 | **无**。纯 ESM 前端模块，不需要 `npm install`，不需要重启服务 |
-| 部署形态 | Docker 镜像、源码/裸机 Node、Windows 本地运行均可（目录见下） |
-| 网络 | 安装时服务器需能访问 GitHub（或用 ZIP / 手动拷贝方式绕过） |
+| 部署形态 | Docker 镜像、源码/裸机 Node、Windows 本地运行均可 |
+| 网络 | 安装时 SillyTavern 所在机器需能 `git clone` github.com |
 
-扩展目录（挂载到容器内的路径）：
+安装位置（ST 的第三方扩展目录，由 ST 自动创建）：
 
 ```
-public/scripts/extensions/third-party/ST-Error-Log-Panel/
+<SillyTavern>/public/scripts/extensions/third-party/ST-Error-Log-Panel/
 ```
-
-Docker 常见映射：宿主机 `./sillytavern-extensions` → 容器 `/home/node/app/public/scripts/extensions/third-party`
 
 ## 安装
 
-> 本仓库是**私有仓库**，SillyTavern 内置安装走的是服务端 `git clone`，因此需要在 URL 里带凭据。
+**用 SillyTavern 自带的扩展安装器装，不需要下载、不需要解压、不需要手动放目录。**
 
-### 方式 A：ST 内置安装（推荐）
-
-1. 生成一个 **Fine-grained PAT**（GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens）：
-   - Repository access：`Only select repositories` → `ST-Error-Log-Panel`
-   - Permissions → Repository permissions → **Contents: Read-only**（只装不推，给只读就够）
-2. SillyTavern → 顶部「扩展」图标（Extensions）→ **Install extension** → 粘贴：
+1. 打开 SillyTavern 页面，点顶部工具栏的「扩展」图标（Extensions，插头形状）。
+2. 在最上面的 **Install extension**（安装扩展）输入框里粘贴仓库地址：
 
 ```
-https://<你的GitHub用户名>:<PAT>@github.com/gmnop/ST-Error-Log-Panel.git
+https://github.com/gmnop/ST-Error-Log-Panel.git
 ```
 
-3. 出现 `Extension installed successfully` 后**硬刷新**页面（`Ctrl+Shift+R`）。
+3. 点右侧 **Install**，等提示 `Extension installed successfully`。
+4. 回到页面按 **Ctrl + Shift + R** 硬刷新。
 
-⚠️ PAT 会被写进服务器上的 `public/scripts/extensions/third-party/ST-Error-Log-Panel/.git/config`。同一台机器上能读该目录的人都能看到它 —— 请在用完后到 GitHub 轮换/吊销该 PAT，或改用方式 B 的 Deploy Key。
-
-### 方式 B：Deploy Key（SSH，凭据不进 URL）
-
-```bash
-ssh-keygen -t ed25519 -C "st-error-log-panel" -f /tmp/stelp_deploy -N ""
-# 把 /tmp/stelp_deploy.pub 加到仓库 Settings → Deploy keys（只读即可）
-```
-
-Docker 部署时在容器里执行：
-
-```bash
-docker exec -it sillytavern sh
-cd /home/node/app/public/scripts/extensions/third-party
-GIT_SSH_COMMAND='ssh -i /path/in/container/stelp_deploy -o StrictHostKeyChecking=no' \
-  git clone git@github.com:gmnop/ST-Error-Log-Panel.git
-```
-
-### 方式 C：ZIP 手动解压
-
-GitHub 仓库页 → `Code` → `Download ZIP` → 解压到 `third-party/`，并确认**目录名就是 `ST-Error-Log-Panel`**（不是 `ST-Error-Log-Panel-main`）。Docker 部署直接放进宿主机挂载目录即可：
-
-```bash
-cd /path/to/sillytavern-extensions        # 你映射到 third-party 的宿主机目录
-unzip ST-Error-Log-Panel-main.zip && mv ST-Error-Log-Panel-main ST-Error-Log-Panel
-```
-
-### 方式 D：宿主机已有目录
-
-本扩展已经在跑的话，把它变成 git 仓库即可获得更新能力：
-
-```bash
-cd <third-party>/ST-Error-Log-Panel
-git init && git remote add origin https://github.com/gmnop/ST-Error-Log-Panel.git
-git fetch origin && git reset --hard origin/main
-```
+ST 会在 `third-party/` 下执行 `git clone`，目录名自动取仓库名 `ST-Error-Log-Panel`；`manifest.json` 位于仓库根目录，装完即被识别，无需重启服务。
 
 ### 安装成功自检
 
@@ -139,12 +99,12 @@ STELP.diagnose(STELP.store.entries[0])   // 对任意一条记录跑诊断
 
 ## 更新
 
-`manifest.json` 里 `auto_update: true`，扩展抽屉里该扩展会显示「更新」按钮，点击即执行 `git pull`（安装时用的 git → 更新也用 git；ZIP 安装的没有 `.git`，更新按钮不会出现）。
+`manifest.json` 里 `auto_update: true`，扩展抽屉里该扩展会显示「更新」按钮，点一下即执行 `git pull` 拉取最新提交。
 
-手动更新：
+也可以在 SillyTavern 目录下手动更新：
 
 ```bash
-cd <third-party>/ST-Error-Log-Panel && git pull
+git -C public/scripts/extensions/third-party/ST-Error-Log-Panel pull
 ```
 
 ## 使用
@@ -224,8 +184,9 @@ ode server.js、Windows 双击启动、服务管理器托管…），写死一�
 **装完显示英文名 / 版本号不对？**
 `manifest.json` 必须能被 ST 解析（UTF-8、无 BOM、合法 JSON）。改完硬刷新。
 
-**ST 里点安装报 `Authentication failed`？**
-私有仓库 URL 里必须带凭据（方式 A）或已配置 Deploy Key；也确认 PAT 没有过期、且对该仓库有 Contents 读权限。
+**ST 里点安装报错？**
+- `Could not resolve host` / `Recv failure: Connection was reset` / `RPC failed` → 是 SillyTavern 所在机器到 github.com 的 git 通道问题（国内网络常见）。确认 `git clone https://github.com/gmnop/ST-Error-Log-Panel.git` 能通，必要时给 ST 进程配代理后再装。
+- `Repository not found` / `404` → 检查地址是否拼错（`gmnop/ST-Error-Log-Panel.git`），以及仓库是否已公开。
 
 **面板里的错误和我 F12 看到的不一致？**
 本扩展只观测**同源 `/api/*`**。浏览器直连第三方供应商的跨域请求不在此列（也看不到）。
@@ -242,9 +203,8 @@ ode server.js、Windows 双击启动、服务管理器托管…），写死一�
 # ① 删除扩展目录（唯一实体）
 rm -rf <third-party>/ST-Error-Log-Panel
 
-# ② 清掉 ST 设置里的孤儿键（可选；先按你的部署方式把 SillyTavern 停下来再改更稳妥）
-#     下面是 Docker 的示例，其它部署方式换成对应的停止/启动即可
-docker stop sillytavern
+# ② 清掉 ST 设置里的孤儿键（可选）
+#    先按你自己的方式把 SillyTavern 停下来，改完再启动（容器 / 终端 / 服务管理器均可）
 python3 - <<'PY'
 import json, shutil, time
 p = '/path/to/data/default-user/settings.json'
@@ -253,7 +213,6 @@ d = json.load(open(p, encoding='utf-8'))
 d.get('extension_settings', {}).pop('stErrorLogPanel', None)
 json.dump(d, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=4)
 PY
-docker start sillytavern
 
 # ③ 浏览器端残留（F12 Console）
 localStorage.removeItem('stErrorLogPanel');
